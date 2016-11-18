@@ -50,7 +50,7 @@ def setup(username, password, hostname):
     """Create all required elements"""
     sab = satellite_api_benchmark.Satellite5(username, password, hostname)
     sab.check()
-    sab.setup()
+    return sab.setup()
 
 
 def run(username, password, hostname):
@@ -75,7 +75,8 @@ def main():
 
     # What are we going to do?
     if action == 'setup':
-        setup(username, password, hostname)
+        out = setup(username, password, hostname)
+        print "CREATED %s" % ','.join(out)
     elif action == 'run':
         try:
             procs = int(sys.argv[5])

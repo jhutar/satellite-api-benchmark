@@ -40,6 +40,9 @@ class Satellite5(object):
        API performance."""
 
     repeats_default = 10
+    org_admin = 'benchmark-org-0-admin'
+    org_pass = 'benchmark-org-0-pass'
+    org_channel = 'benchmark-org-0-channel-0'
     hwinfo = [
         {'bus': 'pci', 'driver': 'agpgart-intel', 'pciType': '1',
          'prop4': '2193', 'prop1': '8086', 'prop2': '0044', 'prop3': '17AA',
@@ -297,7 +300,7 @@ class Satellite5(object):
     def setup(self):
         """Create all the required setup to run the workload"""
         logger.info("Building packages")
-        for i in range(50):
+        for i in range(500):
             p = rpmfluff.SimpleRpmBuild('benchmark-org-0-package-%s' % i, '0.1', '1')
             p.add_installed_directory('/usr/share/benchmark-org-0-package-%s' % i, mode=755)
             p.add_installed_file('/usr/share/benchmark-org-0-package-%s/something.txt' % i, rpmfluff.SourceFile('something.txt', "This is a test\n"), mode='0644')
@@ -310,7 +313,7 @@ class Satellite5(object):
             p.make()
 
         logger.info("Creating orgs")
-        for i in range(10):
+        for i in range(100):
             # Create org
             params = [
                 'benchmark-org-%s' % i,   # orgName
@@ -323,13 +326,18 @@ class Satellite5(object):
                 False   # usePamAuth
             ]
             org = self._api('org.create', *params)
+            # In first org we need lots of system entitments, no need for channel
+            # entitlements as we will use custom channel
+            org_system_entitlements = 1
+            if i == 0:
+                org_system_entitlements = 1000
             # Add system entitlements
             s_entitlements = ['enterprise_entitled', 'provisioning_entitled']
             for se in s_entitlements:
                 params = [
                     org['id'],   # orgId
                     se,   # label
-                    100   # allocation
+                    org_system_entitlements   # allocation
                 ]
                 self._api('org.setSystemEntitlements', *params)
             # Add software entitlements
@@ -338,7 +346,7 @@ class Satellite5(object):
                 params = [
                     org['id'],   # orgId
                     chf,   # label
-                    10   # allocation
+                    1   # allocation
                 ]
                 self._api('org.setSoftwareEntitlements', *params)
             # Store id of organization created
@@ -346,14 +354,12 @@ class Satellite5(object):
 
         logger.info("As of now, we are going to work with first of created orgs only")
         self._logout()
-        org_admin = 'benchmark-org-0-admin'
-        org_pass = 'benchmark-org-0-pass'
-        self.username = org_admin
-        self.password = org_pass
+        self.username = self.org_admin
+        self.password = self.org_pass
         self._login()
 
         logger.info("Creating users")
-        for i in range(10):
+        for i in range(100):
             params = [
                 'benchmark-org-0-user-%s' % i,   # desiredLogin
                 'benchmark-org-0-pass-%s' % i,   # desiredPassword
@@ -365,7 +371,7 @@ class Satellite5(object):
             self._api('user.create', *params)
 
         logger.info("Creating channels")
-        for i in range(10):
+        for i in range(100):
             params = [
                 'benchmark-org-0-channel-%s' % i,   # label
                 'benchmark-org-0-channel-%s' % i,   # name
@@ -378,8 +384,7 @@ class Satellite5(object):
             self._api('channel.software.create', *params)
 
         logger.info("Pushing packages into first of created channel")
-        channel = 'benchmark-org-0-channel-0'
-        for i in range(50):
+        for i in range(500):
             for v in ['0.1', '0.2']:
                 command = [
                     'rhnpush',
@@ -390,7 +395,7 @@ class Satellite5(object):
                     '-p',
                     self.password,
                     '-c',
-                    channel,
+                    self.org_channel,
                     '--nosig',
                     'test-rpmbuild-benchmark-org-0-package-%s-%s-1/RPMS/x86_64/benchmark-org-0-package-%s-%s-1.x86_64.rpm' % (i, v, i, v),
                 ]
@@ -411,7 +416,7 @@ class Satellite5(object):
             ]
             return self._api('packages.findByNvrea', *params)[0]['id']
 
-        for i in range(20):
+        for i in range(200):
             pid = get_pid_by_name('benchmark-org-0-package-%s' % i, '', '0.2', '1', 'x86_64')
             errata = {
                 'synopsis': 'Fake advisory in org 0 channel 0 for package %i' % i,
@@ -434,19 +439,22 @@ class Satellite5(object):
                 keywords,   # keywords
                 [pid],   # packageIds
                 True,   # publish
-                [channel]   # ChannelLabeles
+                [self.org_channel]   # ChannelLabeles
             ]
             self._api('errata.create', *params)
 
         logger.info("Creating activation key")
-        params = [
-            '',   # key
-            'Benchmark AK',   # description
-            channel,   # baseChannelLabel
-            [],   # add-on entitlements
-            False,   # universalDefault
-        ]
-        ak = self._api('activationkey.create', *params)
+        for i in range(100):
+            params = [
+                '',   # key
+                'Benchmark AK %s' % i,   # description
+                'benchmark-org-0-channel-%s' % i,   # baseChannelLabel
+                [],   # add-on entitlements
+                False,   # universalDefault
+            ]
+            activationkey = self._api('activationkey.create', *params)
+            if i == 0:
+                ak = activationkey
 
         logger.info("Registering hosts")
         packages = []
@@ -464,7 +472,7 @@ class Satellite5(object):
                              'arch': 'x86_64'})
         server_url = "https://%s/XMLRPC" % self.hostname
         client = xmlrpc_login(server_url)
-        for i in range(100):
+        for i in range(1000):
             new_system = client.registration.new_system_user_pass(
                 'System %s' % i,
                 'RHEL Server',
@@ -477,6 +485,7 @@ class Satellite5(object):
                 new_system['system_id'],
                 self.hwinfo)
         logger.info("Created organizations: %s" % ','.join(self.created))
+        return self.created
 
     def cleanup(self, orgs):
         """Cleanup all the setup we did in setup()"""
@@ -503,12 +512,9 @@ class Satellite5(object):
                 break
         users = self._measure(self.repeats_default, 'org.listUsers', orgid)
         # Below part runs with Org admin user
-        org_admin = 'benchmark-org-0-admin'
-        org_pass = 'benchmark-org-0-pass'
-        org_channel = 'benchmark-org-0-channel-0'
         self._logout()
-        self.username = org_admin
-        self.password = org_pass
+        self.username = self.org_admin
+        self.password = self.org_pass
         self._login()
         # Users
         users = self._measure(self.repeats_default, 'user.listUsers')
@@ -518,11 +524,11 @@ class Satellite5(object):
         for channel in channels:
             chdetail = self._measure(1, 'channel.software.getDetails', channel['label'])
         # Packages
-        packages = self._measure(self.repeats_default, 'channel.software.listAllPackages', org_channel)
+        packages = self._measure(self.repeats_default, 'channel.software.listAllPackages', self.org_channel)
         for package in packages:
             pdetail = self._measure(1, 'packages.getDetails', package['id'])
         # Errata
-        erratas = self._measure(self.repeats_default, 'channel.software.listErrata', org_channel)
+        erratas = self._measure(self.repeats_default, 'channel.software.listErrata', self.org_channel)
         for errata in erratas:
             edetail = self._measure(1, 'errata.getDetails', errata['advisory_name'])
         # Systems
