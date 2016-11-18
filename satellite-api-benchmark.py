@@ -14,6 +14,7 @@ import satellite_api_benchmark
 
 
 def print_results(results):
+    """Print nicely formatted results of the measurements"""
     # Main table
     header = ['process', 'method', 'repeats', 'avg duration']
     summary = {}   # for summary data, assumes we do not call one method with different inputs
@@ -45,9 +46,23 @@ def print_results(results):
     print "TOTAL %s %s" % (len(results), total)
 
 
+def setup(username, password, hostname):
+    """Create all required elements"""
+    sab = satellite_api_benchmark.Satellite5(username, password, hostname)
+    sab.check()
+    sab.setup()
+
+
 def run(username, password, hostname):
+    """Run benchmark"""
     sab = satellite_api_benchmark.Satellite5(username, password, hostname)
     return sab.run()
+
+
+def cleanup(username, password, hostname, orgs):
+    """Cleanup all setup and temporary files we have created"""
+    sab = satellite_api_benchmark.Satellite5(username, password, hostname)
+    sab.cleanup(orgs)
 
 
 def main():
@@ -58,18 +73,20 @@ def main():
     hostname = sys.argv[3]
     action = sys.argv[4]
 
+    # What are we going to do?
     if action == 'setup':
-        sab = satellite_api_benchmark.Satellite5(username, password, hostname)
-        sab.check()
-        sab.setup()
+        setup(username, password, hostname)
     elif action == 'run':
         try:
             procs = int(sys.argv[5])
         except IndexError:
             procs = 1
+        # Run without multiprocessing module when number of procs is default
+        # 1 as it makes it easier to see tracebacks
         if procs > 1:
-            pool = multiprocessing.Pool(processes=procs)
             results = []
+            # Define process pools and start processes
+            pool = multiprocessing.Pool(processes=procs)
             for i in range(procs):
                 results.append(
                     pool.apply_async(
@@ -89,12 +106,12 @@ def main():
             result = run(username, password, hostname)
             print_results([result])
     elif action == 'cleanup':
-        sab = satellite_api_benchmark.Satellite5(username, password, hostname)
         orgs = [int(i) for i in sys.argv[5].split(',')]
-        sab.cleanup(orgs)
+        cleanup(username, password, hostname, orgs)
     else:
         print "ERROR: Unknown action"
-        sys.exit(1)
+        return 1
+    return 0
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
