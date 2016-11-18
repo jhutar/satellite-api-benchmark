@@ -488,8 +488,45 @@ class Satellite5(object):
 
     def run(self):
         """Run the API benchmark"""
+        # This part runs with Satellite admin user
+        orgs = self._measure(self.repeats_default, 'org.listOrgs')
+        swe = self._measure(self.repeats_default, 'org.listSoftwareEntitlements')
+        sye = self._measure(self.repeats_default, 'org.listSystemEntitlements')
+        orgid = None
+        for org in orgs:
+            odetail = self._measure(1, 'org.getDetails', org['name'])
+            if org['name'] == 'benchmark-org-0':
+                orgid = org['id']
+                break
+        users = self._measure(self.repeats_default, 'org.listUsers', orgid)
+        # Below part runs with Org admin user
+        org_admin = 'benchmark-org-0-admin'
+        org_pass = 'benchmark-org-0-pass'
+        org_channel = 'benchmark-org-0-channel-0'
+        self._logout()
+        self.username = org_admin
+        self.password = org_pass
+        self._login()
+        # Users
+        users = self._measure(self.repeats_default, 'user.listUsers')
+        for user in users:
+            udetail = self._measure(1, 'user.getDetails', user['login'])
+        channels = self._measure(self.repeats_default, 'channel.listSoftwareChannels')
+        for channel in channels:
+            chdetail = self._measure(1, 'channel.software.getDetails', channel['label'])
+        # Packages
+        packages = self._measure(self.repeats_default, 'channel.software.listAllPackages', org_channel)
+        for package in packages:
+            pdetail = self._measure(1, 'packages.getDetails', package['id'])
+        # Errata
+        erratas = self._measure(self.repeats_default, 'channel.software.listErrata', org_channel)
+        for errata in erratas:
+            edetail = self._measure(1, 'errata.getDetails', errata['advisory_name'])
+        # Systems
         systems = self._measure(self.repeats_default, 'system.listSystems')
-        print len(systems)
+        for system in systems:
+            sdetail = self._measure(1, 'system.getDetails', system['id'])
+            sapplicable = self._measure(1, 'system.getUnscheduledErrata', system['id'])
         return self.actions
 
     def _api(self, method, *args):

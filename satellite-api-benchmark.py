@@ -44,9 +44,11 @@ def print_results(results):
     print
     print "TOTAL %s %s" % (len(results), total)
 
+
 def run(username, password, hostname):
     sab = satellite_api_benchmark.Satellite5(username, password, hostname)
     return sab.run()
+
 
 def main():
     """Main"""
