@@ -10,6 +10,7 @@ import time
 import subprocess
 import re
 import shutil
+import logging
 
 import xmlrpclib
 if sys.version_info >= (2, 7, 9):
@@ -17,6 +18,10 @@ if sys.version_info >= (2, 7, 9):
 
 import rpmfluff
 
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(levelname)s %(asctime)s %(message)s')
+logger = logging.getLogger(__name__)
 
 def xmlrpc_login(server_url):
     """Generic login code"""
@@ -293,7 +298,7 @@ class Satellite5(object):
 
     def setup(self):
         """Create all the required setup to run the workload"""
-        print "DEBUG: Building packages"
+        logger.info("Building packages")
         for i in range(50):
             p = rpmfluff.SimpleRpmBuild('benchmark-org-0-package-%s' % i, '0.1', '1')
             p.add_installed_directory('/usr/share/benchmark-org-0-package-%s' % i, mode=755)
@@ -306,7 +311,7 @@ class Satellite5(object):
             p.add_description('This rpm is a very updated one.')
             p.make()
 
-        print "DEBUG: Creating orgs"
+        logger.info("Creating orgs")
         for i in range(10):
             # Create org
             params = [
@@ -341,7 +346,7 @@ class Satellite5(object):
             # Store id of organization created
             self.created.append(org['id'])
 
-        print "DEBUG: As of now, we are going to work with first of created orgs only"
+        logger.info("As of now, we are going to work with first of created orgs only")
         self._logout()
         org_admin = 'benchmark-org-0-admin'
         org_pass = 'benchmark-org-0-pass'
@@ -349,7 +354,7 @@ class Satellite5(object):
         self.password = org_pass
         self._login()
 
-        print "DEBUG: Creating users"
+        logger.info("Creating users")
         for i in range(10):
             params = [
                 'benchmark-org-0-user-%s' % i,   # desiredLogin
@@ -361,7 +366,7 @@ class Satellite5(object):
             ]
             self._api('user.create', *params)
 
-        print "DEBUG: Creating channels"
+        logger.info("Creating channels")
         for i in range(10):
             params = [
                 'benchmark-org-0-channel-%s' % i,   # label
@@ -374,7 +379,7 @@ class Satellite5(object):
             ]
             self._api('channel.software.create', *params)
 
-        print "DEBUG: Pushing packages into first of created channel"
+        logger.info("Pushing packages into first of created channel")
         channel = 'benchmark-org-0-channel-0'
         for i in range(50):
             for v in ['0.1', '0.2']:
@@ -394,7 +399,7 @@ class Satellite5(object):
                 rc = subprocess.call(command)
                 assert rc == 0
 
-        print "DEBUG: Creating erratas"
+        logger.info("Creating erratas")
 
         def get_pid_by_name(n, e, v, r, a):
             """Return package ID for given package
@@ -435,7 +440,7 @@ class Satellite5(object):
             ]
             self._api('errata.create', *params)
 
-        print "DEBUG: Creating activation key"
+        logger.info("Creating activation key")
         params = [
             '',   # key
             'Benchmark AK',   # description
@@ -445,7 +450,7 @@ class Satellite5(object):
         ]
         ak = self._api('activationkey.create', *params)
 
-        print "DEBUG: Registering hosts"
+        logger.info("Registering hosts")
         packages = []
         for i in range(950):   # some random packages just to get some payload
             packages.append({'name': 'package%s' % i,
@@ -473,18 +478,18 @@ class Satellite5(object):
             client.registration.refresh_hw_profile(
                 new_system['system_id'],
                 self.hwinfo)
-        print "Created organizations: %s" % ','.join(self.created)
+        logger.info("Created organizations: %s" % ','.join(self.created))
 
     def cleanup(self, orgs):
         """Cleanup all the setup we did in setup()"""
-        print "DEBUG: Deleting organizations %s" % orgs
+        logger.info("Deleting organizations %s" % orgs)
         for i in orgs:
             self._api('org.delete', i)
-        print "DEBUG: Removing rpmfluff build directories"
+        logger.info("Removing rpmfluff build directories")
         for f in os.listdir('.'):
             if re.search('test-rpmbuild-.*', f):
                 shutil.rmtree(f)
-        print "Cleanup finished"
+        logger.info("Cleanup finished")
 
     def run(self):
         """Run the API benchmark"""
