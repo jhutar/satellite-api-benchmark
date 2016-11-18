@@ -23,6 +23,6 @@ setup(name='satellite_api_benchmark',
       author_email='jhutar@redhat.com',
       license='GPLv3+',
       packages=['satellite_api_benchmark'],
-      install_requires=[],
+      install_requires=['tabulate'],
       include_package_data=True,
       zip_safe=False)

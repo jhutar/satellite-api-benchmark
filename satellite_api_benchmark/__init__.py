@@ -36,6 +36,7 @@ class Satellite5(object):
     """This class is supposed to provide functions to test Red Hat Satellite 5
        API performance."""
 
+    repeats_default = 10
     hwinfo = [
         {'bus': 'pci', 'driver': 'agpgart-intel', 'pciType': '1',
          'prop4': '2193', 'prop1': '8086', 'prop2': '0044', 'prop3': '17AA',
@@ -487,8 +488,8 @@ class Satellite5(object):
 
     def run(self):
         """Run the API benchmark"""
-        #systems = self._measure('system.listSystems')
-        #print len(systems)
+        systems = self._measure(self.repeats_default, 'system.listSystems')
+        print len(systems)
         return self.actions
 
     def _api(self, method, *args):
@@ -501,12 +502,15 @@ class Satellite5(object):
         fce = getattr(self.client, method)
         start = time.time()
         for i in range(repeats):
-            output = fce(self.key, *args)
+            if self.key:
+                output = fce(self.key, *args)
+            else:
+                output = fce(*args)
         end = time.time()
         self.actions.append({'repeats': repeats,
                              'method': method,
                              'args': args,
-                             'output': output,
+                             'output_len': len(output),
                              'start': start,
                              'end': end})
         return output
@@ -515,7 +519,7 @@ class Satellite5(object):
         """Populate self.key"""
         server_url = "https://%s/rpc/api" % self.hostname
         self.client = xmlrpc_login(server_url)
-        self.key = self.client.auth.login(self.username, self.password)
+        self.key = self._measure(self.repeats_default, 'auth.login', self.username, self.password)
 
     def _logout(self):
         """Close the API session"""
