@@ -17,16 +17,21 @@ def main():
     username = sys.argv[2]
     password = sys.argv[3]
     hostname = sys.argv[4]
+    action = sys.argv[5]
 
-    # Run
     sab = satellite_api_benchmark.Satellite5(username, password, hostname)
-    sab.check()
-    sab.setup()
-    results = sab.run()
-    sab.cleanup()
-
-    # Report
-    print results
+    if action == 'setup':
+        sab.check()
+        sab.setup()
+    elif action == 'run':
+        results = sab.run()
+        print results
+    elif action == 'cleanup':
+        orgs = [int(i) for i in sys.argv[6].split(',')]
+        sab.cleanup(orgs)
+    else:
+        print "ERROR: Unknown action"
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
