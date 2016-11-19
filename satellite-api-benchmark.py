@@ -107,7 +107,7 @@ def main():
             result = run(username, password, hostname)
             print_results([result])
     elif action == 'cleanup':
-        orgs = [int(i) for i in sys.argv[5].split(',')]
+        orgs = [int(i) for i in sys.argv[5].split(',') if i != '']
         cleanup(username, password, hostname, orgs)
     else:
         print "ERROR: Unknown action"
