@@ -3,15 +3,19 @@ Satellite API benchmark
 
 This tool runs certain (supposedly stable) set of API calls against Red Hat Satellite 5 (or Spacewalk) server. Its goal is to provide single numbed related to API performance (and breakdown for individual groups of calls).
 
-Installation
-------------
+Installation (RHEL6)
+--------------------
 
 .. code:: sh
-    git clone ...
+    rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+    yum -y install python-virtualenv
+    git clone https://github.com/jhutar/satellite-api-benchmark.git
     cd satellite-api-benchmark
     virtualenv venv
+    . venv/bin/activate
     pip install -r requirements.txt
-    wget -q https://pagure.io/rpmfluff/raw/master/f/rpmfluff.py
+    wget  --quiet  --output-document=rpmfluff.py 'https://pagure.io/rpmfluff/raw/956609fdb7ffe539128f13dba80480728ea913fe/f/rpmfluff.py'
+    export PYTHONPATH=/usr/lib64/python2.6/site-packages/
 
 Running
 -------
