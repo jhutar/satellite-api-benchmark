@@ -294,7 +294,7 @@ class Satellite5(object):
         assert ent['free'] >= 0, "Checking %s" % ent
         assert ent['unallocated'] >= 1000, "Checking %s" % ent
         assert len(self.client.channel.listAllChannels(self.key)) == 0, "There should be no channels"
-        assert len(self.client.org.listUsers(self.key)) == 1
+        assert len(self.client.org.listUsers(self.key, 1)) == 1
         assert len(self.client.system.listSystems(self.key)) == 0, "There should be no systems"
 
     def setup(self):
