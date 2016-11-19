@@ -81,6 +81,7 @@ def main():
     # What are we going to do?
     if action == 'check':
         check(username, password, hostname)
+        print "CHECK PASSED"
     elif action == 'setup':
         out = setup(username, password, hostname)
         print "CREATED %s" % ','.join(out)
