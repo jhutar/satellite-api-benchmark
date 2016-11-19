@@ -291,8 +291,8 @@ class Satellite5(object):
         assert ent['label'] == 'enterprise_entitled', "Checking %s" % ent
         assert ent['used'] == 0, "Checking %s" % ent
         assert ent['allocated'] == 0, "Checking %s" % ent
-        assert ent['free'] >= 100, "Checking %s" % ent
-        assert ent['unallocated'] >= 0, "Checking %s" % ent
+        assert ent['free'] >= 0, "Checking %s" % ent
+        assert ent['unallocated'] >= 1000, "Checking %s" % ent
         assert len(self.client.channel.listAllChannels(self.key)) == 0, "There should be no channels"
         assert len(self.client.org.listUsers) == 1
         assert len(self.client.system.listSystems(self.key)) == 0, "There should be no systems"
