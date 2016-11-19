@@ -46,10 +46,15 @@ def print_results(results):
     print "TOTAL %s %s" % (len(results), total)
 
 
+def check(username, password, hostname):
+    """Check if satellite is clean"""
+    sab = satellite_api_benchmark.Satellite5(username, password, hostname)
+    return sab.check()
+
+
 def setup(username, password, hostname):
     """Create all required elements"""
     sab = satellite_api_benchmark.Satellite5(username, password, hostname)
-    sab.check()
     return sab.setup()
 
 
@@ -74,7 +79,9 @@ def main():
     action = sys.argv[4]
 
     # What are we going to do?
-    if action == 'setup':
+    if action == 'check':
+        check(username, password, hostname)
+    elif action == 'setup':
         out = setup(username, password, hostname)
         print "CREATED %s" % ','.join(out)
     elif action == 'run':
