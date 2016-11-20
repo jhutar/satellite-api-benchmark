@@ -84,7 +84,7 @@ def main():
         print "CHECK PASSED"
     elif action == 'setup':
         out = setup(username, password, hostname)
-        print "CREATED %s" % ','.join(out)
+        print "CREATED %s" % ','.join([str(i) for i in out])
     elif action == 'run':
         try:
             procs = int(sys.argv[5])

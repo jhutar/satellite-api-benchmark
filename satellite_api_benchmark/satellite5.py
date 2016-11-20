@@ -484,7 +484,7 @@ class Satellite5(object):
             client.registration.refresh_hw_profile(
                 new_system['system_id'],
                 self.hwinfo)
-        logger.info("Created organizations: %s" % ','.join(self.created))
+        logger.info("Created organizations: %s" % self.created)
         return self.created
 
     def cleanup(self, orgs):
