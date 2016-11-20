@@ -8,7 +8,7 @@ Installation (RHEL6)
 
 .. code:: sh
     rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
-    yum -y install python-virtualenv
+    yum -y install python-virtualenv git rpm-build screen   # screen is completely optional but useful
     git clone https://github.com/jhutar/satellite-api-benchmark.git
     cd satellite-api-benchmark
     virtualenv venv
@@ -22,7 +22,11 @@ Running
 
 Before running the tool, make sure your server have empty database (no channels, no users, no systems...).
 
-To run API call workload against `hostname` server (localhost strongly suggested so networking performance does not play role in the result) with admin user `admin` (whose password is `password`), and to run the workload `5` times in parallel (maybe you are interested how the performance degrades in concurrent runs?):
+To run API call workload against `hostname` server (localhost strongly suggested so networking performance does not play role in the result) with admin user `admin` (whose password is `password`), and to run the workload `5` times in parallel (maybe you are interested how the performance degrades based on number of concurrent runs? When not provided, `1` is default.):
 
 .. code:: sh
-    satellite-api-benchmark.py 5 admin password hostname
+    ./satellite-api-benchmark.py admin password hostname check
+    ./satellite-api-benchmark.py admin password hostname setup
+    ./satellite-api-benchmark.py admin password hostname run 5   # actual test
+    ./satellite-api-benchmark.py admin password hostname cleanup
+    ./satellite-api-benchmark.py admin password hostname check
