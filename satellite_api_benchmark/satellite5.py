@@ -501,6 +501,7 @@ class Satellite5(object):
     def run(self):
         """Run the API benchmark"""
         # This part runs with Satellite admin user
+        self.key = self._measure(self.repeats_default, 'auth.login', self.username, self.password)
         orgs = self._measure(self.repeats_default, 'org.listOrgs')
         swe = self._measure(self.repeats_default, 'org.listSoftwareEntitlements')
         sye = self._measure(self.repeats_default, 'org.listSystemEntitlements')
@@ -571,7 +572,7 @@ class Satellite5(object):
         server_url = "https://%s/rpc/api" % self.hostname
         self.client = xmlrpc_login(server_url)
         logger.debug("Getting API key")
-        self.key = self._measure(self.repeats_default, 'auth.login', self.username, self.password)
+        self.key = self._api('auth.login', self.username, self.password)
 
     def _logout(self):
         """Close the API session"""
