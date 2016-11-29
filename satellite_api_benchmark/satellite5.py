@@ -503,14 +503,14 @@ class Satellite5(object):
         # This part runs with Satellite admin user
         self.key = self._measure(self.repeats_default, 'auth.login', self.username, self.password)
         orgs = self._measure(self.repeats_default, 'org.listOrgs')
-        swe = self._measure(self.repeats_default, 'org.listSoftwareEntitlements')
-        sye = self._measure(self.repeats_default, 'org.listSystemEntitlements')
         orgid = None
         for org in orgs:
             odetail = self._measure(1, 'org.getDetails', org['name'])
             if org['name'] == 'benchmark-org-0':
                 orgid = org['id']
                 break
+        swe = self._measure(self.repeats_default, 'org.listSoftwareEntitlementsForOrg', orgid)
+        sye = self._measure(self.repeats_default, 'org.listSystemEntitlementsForOrg', orgid)
         users = self._measure(self.repeats_default, 'org.listUsers', orgid)
         # Below part runs with Org admin user
         self._logout()
