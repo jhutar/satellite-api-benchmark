@@ -540,9 +540,13 @@ class Satellite5(object):
         return self.actions
 
     def _api(self, method, *args):
-        logger.debug("Running unmeasured API call %s %s", method, args)
         fce = getattr(self.client, method)
-        return fce(self.key, *args)
+        if method == 'auth.login':
+            logger.debug("Running unmeasured API login call %s", method)
+            return fce(*args)
+        else:
+            logger.debug("Running unmeasured API call %s %s", method, args)
+            return fce(self.key, *args)
 
     def _measure(self, repeats, method, *args):
         """Run given API call, measure its duration and record
