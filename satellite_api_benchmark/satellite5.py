@@ -557,7 +557,7 @@ class Satellite5(object):
         fce = getattr(self.client, method)
         start = time.time()
         for i in range(repeats):
-            if self.key:
+            if self.key and method != 'auth.login':
                 output = fce(self.key, *args)
             else:
                 output = fce(*args)
